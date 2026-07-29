@@ -65,6 +65,8 @@ enum SongsErr {
     errNotFoundIn,
     errNotOKOut,
     errNot4Args,
+    errEmptyColl,
+    errFailToParse,
 
     errCount // contatore di items disponibili in enum
 };
@@ -72,6 +74,8 @@ enum SongsErr {
 // e relativa chiamata al messaggio di errore
 
 void showError(SongsErr err, const std::string& detail);
+
+std::string zero_fill(int number, int length); 
 
 // record singola canzone
 
@@ -84,11 +88,7 @@ struct song {
 };
 
 //  record di parametri attuali dalla linea di comando
-struct SongsArgs {
-    std::string infile;
-    std::string cmdcode;
-    std::string outfile;
-};
+
 struct SongsArgs {
     std::string infile;
     std::string cmdstr; // stringa letta
@@ -107,7 +107,7 @@ long song_runtime_total (song s); // rende il runtime totale in secondi
 
 void songs_split_cmd(std::string inparm, std::string &outcmd, std::string &outval); // split di argv[2] se cmd:val
 SongsCmd songs_code_cmd(std::string inparm) ; // normalizza e codifica la string cmd in val di enum univoci
-void songs_normalize_cmd(std::string inparm) ;
+void songs_normalize_cmd(std::string &inparm) ;
 bool songs_parse_args(int argc, char *argv[], SongsArgs& args); // parse degli argv[], rende true se ok
 bool songs_parse_cmd(const std::string& text, SongsCmd& cmd);
 
@@ -116,5 +116,12 @@ std::ifstream song_ropen(std::string song_filename_in); // apre il file di input
 std::ofstream song_fopen(std::string song_filename_out); // apre il file di output in modo w
 
 void song_close(std::ifstream& file); // chiude il file anche se non e' necessario con ifstream, ofstream
+
+bool songs_read_line (inFile &file, std::string &line) ;
+bool songs_read_fields(std::string line, song &current);
+int songs_read_int_field(std::istringstream& record);
+void coll_exec_cmd(const VecS inColl, SongsArgs &args, VecS &outColl);
+void song_dump(song s);
+
 
 #endif
