@@ -21,6 +21,7 @@ enum SongsCmd {
     filterInt,  // riversa solo le canzoni che matchano una stringa nell' interprete (sub arg)
     filterAnP,  // riversa solo le canzoni con un certo Anno di Pubblicazione (sub arg)
     sortbyAnP,  // ordina la lista per anno di pubb e la riversa integrale 
+    sortbyLen,  // ordina la lista per durata crescente e la riversa integrale
     invalid     // comando non riconosciuto 
 };
 
@@ -34,28 +35,35 @@ struct CmdAlias {
 // tavola degli alias (post normalizzazione)
 
 const CmdAlias CmdTable[] = {
-    {"LIST",        SongsCmd::listTest},
+
+    {"LIST",        SongsCmd::listTest},    // enum 0
     {"L",           SongsCmd::listTest},
     {"SHOW",        SongsCmd::listTest},
 
-    {"SORT",        SongsCmd::sortbyAnP},
-    {"S",           SongsCmd::sortbyAnP},
-
-    {"FILTERLEN",   SongsCmd::filterLen},
+    {"FILTERLEN",   SongsCmd::filterLen},   // enum 1
     {"FILTERL",     SongsCmd::filterLen},
     {"FL",          SongsCmd::filterLen},
 
-    {"FILTERTIT",   SongsCmd::filterTit},
+    {"FILTERTIT",   SongsCmd::filterTit},   // enum 2
     {"FILTERT",     SongsCmd::filterTit},
     {"FT",          SongsCmd::filterTit},
 
-    {"FILTERINT",   SongsCmd::filterAnP},
-    {"FILTERI",     SongsCmd::filterAnP},
-    {"FI",          SongsCmd::filterAnP},
+    {"FILTERINT",   SongsCmd::filterInt},   // enum 3
+    {"FILTERI",     SongsCmd::filterInt},
+    {"FI",          SongsCmd::filterInt},
 
-    {"FILTERANN",   SongsCmd::filterLen},
-    {"FILTERA",     SongsCmd::filterLen},
-    {"FA",          SongsCmd::filterLen}
+    {"FILTERANNO",  SongsCmd::filterAnP},   // enum 4 
+    {"FILTERANP",   SongsCmd::filterAnP},
+    {"FILTERA",     SongsCmd::filterAnP},
+    {"FA",          SongsCmd::filterAnP},
+
+    {"ORDANNO",     SongsCmd::sortbyAnP},   // enum 5
+    {"ORDANP",      SongsCmd::sortbyAnP},
+    {"OA",          SongsCmd::sortbyAnP},
+
+    {"ORDLEN",      SongsCmd::sortbyLen},   // enum 6 
+    {"OL",          SongsCmd::sortbyLen}
+
 };
 
 // codici di errore per selezionare il messaggio 
@@ -66,7 +74,7 @@ enum SongsErr {
     errNotOKOut,
     errNot4Args,
     errEmptyColl,
-    errFailToParse,
+    errInvalidOp,
 
     errCount // contatore di items disponibili in enum
 };
@@ -91,7 +99,7 @@ struct song {
 
 struct SongsArgs {
     std::string infile;
-    std::string cmdstr; // stringa letta
+    std::string cmdstr; // stringa letta e ripulita
     SongsCmd cmdcode;   // codificato in enum val
     std::string subarg;
     std::string outfile;
@@ -101,27 +109,33 @@ using VecS = std::vector<song>;
 using VecStr = std::vector<std::string>;
 
 using inFile = std::ifstream;
-using outFile = std::ofstream;
+using outFile = std::ofstream; 
 
 long song_runtime_total (song s); // rende il runtime totale in secondi 
 
 void songs_split_cmd(std::string inparm, std::string &outcmd, std::string &outval); // split di argv[2] se cmd:val
 SongsCmd songs_code_cmd(std::string inparm) ; // normalizza e codifica la string cmd in val di enum univoci
-void songs_normalize_cmd(std::string &inparm) ;
+std::string text_normalize(std::string &inparm) ;
+bool text_match(std::string fullstr, std::string substr);
+
 bool songs_parse_args(int argc, char *argv[], SongsArgs& args); // parse degli argv[], rende true se ok
 bool songs_parse_cmd(const std::string& text, SongsCmd& cmd);
 
 
-std::ifstream song_ropen(std::string song_filename_in); // apre il file di input in modeo r 
-std::ofstream song_fopen(std::string song_filename_out); // apre il file di output in modo w
+inFile file_ropen(std::string song_filename_in); // apre il file di input in modeo r 
+std::ostream& file_wopen(const std::string& filename, outFile& fileOut); // tenta di aprire in scrittura
 
-void song_close(std::ifstream& file); // chiude il file anche se non e' necessario con ifstream, ofstream
+void file_close(std::ifstream& file);
+void file_close(std::ofstream& file); // e un caso di overloading non ce lo vogliamo concedere?
+
 
 bool songs_read_line (inFile &file, std::string &line) ;
 bool songs_read_fields(std::string line, song &current);
 int songs_read_int_field(std::istringstream& record);
 void coll_exec_cmd(const VecS inColl, SongsArgs &args, VecS &outColl);
 void song_dump(song s);
+void argv_dump(SongsArgs args, std::string msg);
+void  song_write(std::ostream& outSongs, song currSong);
 
 
 #endif

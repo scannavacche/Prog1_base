@@ -1,10 +1,29 @@
 #include "mus_lib.hpp"
 
 const VecStr ErrMsgs = {
+/*
+*   aggiornato sino a 
+
+enum SongsErr {
+    OK,
+    errNotFoundIn,
+    errNotOKOut,
+    errNot4Args,
+    errEmptyColl,
+>    errInvalidOp,
+
+    errCount // contatore di items disponibili in enum
+};
+
+*/
+
     "Operazione completata. ",
     "Non trovato input file: ",
     "Impossibile creare output file: ",
-    "Syntax: musica inputfile command outputfile"
+    "Syntax: musica inputfile command[:key] outputfile",
+    "Lista delle canzoni in ingresso tristemente vuota",
+    "Operazione non riconosciuta: "
+
 };
 
 
@@ -25,27 +44,38 @@ long song_runtime_total (song s){
     return (s.runtime_min * 60 + s.runtime_sec);
 }
 
-void song_close(std::ifstream& file) {
-    file.close();
+void file_close(std::ifstream& file)
+{
+    if (file.is_open())
+        file.close();
 }
 
-outFile song_fopen(std::string song_filename_out){
+void file_close(std::ofstream& file)
+{
+    if (file.is_open())
+        file.close();
+}
+
+std::ostream& file_wopen(const std::string& filename, outFile& fileOut)
+{
     //
-    // apre il file in scrittura e rende l'handle al file
+    // Se filename è valido apre il file e rende lo stream relativo.
+    // In mancanza del nome, o se il nome non e' valido, usa stdout.
     //
-    outFile file(song_filename_out, std::ios::out | std::ios::trunc);
-    if (!file)
-    { 
-        showError(SongsErr::errNotOKOut, song_filename_out);
-        exit(1);
-    } else {
-        return file;
+
+    if (filename.empty())
+        return std::cout;  // caso filename non fornito coma arg da linea di comando
+
+    fileOut.open(filename, std::ios::out | std::ios::trunc);
+
+    if (!fileOut) {  // tento l'apertura con un nome di file non consentito
+        showError(SongsErr::errNotOKOut, filename);
+        return std::cout;  // e rende ancora stdout
     }
 
-    return file;
+    return fileOut;  // se tutto e' andato bene, faccio solo da pipe sul file previsto
 }
-
-inFile song_ropen(std::string song_filename_in){
+inFile file_ropen(std::string song_filename_in){
     inFile file(song_filename_in, std::ios::in);
     if (!file)
     { 
@@ -59,19 +89,22 @@ inFile song_ropen(std::string song_filename_in){
 void showError(SongsErr err, const std::string& detail)
 {
     if (err >= SongsErr::OK && err < SongsErr::errCount)
-        std::cerr << ErrMsgs[err] << detail << '\n';
+        std::cerr << std::endl << ErrMsgs[err] << detail << '\n';
 }
 
 bool songs_parse_args(int argc, char *argv[], SongsArgs& args)
 {
     // std::cout << "Argomenti: " << argc << " : " << argv[1]<< " " << argv[2] << " " << argv[3] << std::endl;
+
     switch (argc) {
 
         case 4:
         case 3:
             args.infile = argv[1];
-            songs_split_cmd(argv[2], args.cmdstr, args.subarg);
+            // argv_dump(args, " pre split_cmd ");
+            songs_split_cmd(argv[2], args.cmdstr, args.subarg); // split su op[:arg]
             args.outfile = (argc == 4) ? argv[3] : "" ;
+            // argv_dump(args, "post split_cmd ");
             // std::cout << "Siamo passati con " << argc << std::endl;
             return true;
 
@@ -88,14 +121,17 @@ bool songs_parse_args(int argc, char *argv[], SongsArgs& args)
 void songs_split_cmd(std::string inparm, std::string &outcmd, std::string &outval){
     
     std::size_t pos = inparm.find(':');
-
+    // std::cout << "Letto: " << inparm << " "; // il ritorno a capo lo mettono dopo
     if (pos == std::string::npos) {
         // comando senza sub arg
+        // std::cout << "non ha argomento e lo tengo com'era, intero\n"; 
         outcmd = inparm;
         outval = "";
+
     } else {
-        std::string outcmd = inparm.substr(0, pos);
-        std::string outval  = inparm.substr(pos + 1);
+        outcmd = inparm.substr(0, pos);
+        outval  = inparm.substr(pos + 1);
+        // std::cout << "Split in " << outcmd << " e " << outval << std::endl;
     }
 }
 
@@ -103,24 +139,30 @@ void songs_split_cmd(std::string inparm, std::string &outcmd, std::string &outva
 // scorre la string di comando e volge ogni char ad uppercase
 // lo fa in place su inparm (byref), quindi non c'e' bisogno di accumulare in una str di ritorno
 // 
-void songs_normalize_cmd(std::string &inparm) {
-    for (char& c : inparm)
+std::string text_normalize(std::string &inparm) {
+    std::string text = inparm;
+    for (char& c : text)
         c = std::toupper(
             static_cast<unsigned char>(c) 
             // il cast esterno serve a tornare da int a char, 
             // toupper non accetta char con valore "negativo", quindi unsigned e' una guardia
         );
+    return text;
 }    
 
-bool songs_parse_cmd(std::string& text, SongsCmd& cmd)
+bool songs_parse_cmd(std::string &text, SongsCmd& cmd)
 {
-    songs_normalize_cmd(text);
+    // std::cout << "Cerco " << text << std::endl << std::endl;
 
-    // std::cout << "Cerco " << text << std::endl;
+    text = text_normalize(text); // ad un certo punto da void e' diventata string :)
+
+    // std::cout << "Upper " << text << std::endl << std::endl;
 
     for (const CmdAlias& item : CmdTable) {
         if (text == item.name) {
             cmd = item.cmd;
+            // std::cout << "Trovato " << cmd << std::endl;
+
             return true;
         }
     }
@@ -207,12 +249,43 @@ void song_dump(song s){
     std::cout << s.titolo << " | " << s.interprete << " | " << s.anno << " | " << zero_fill(s.runtime_min,2) << ":" << zero_fill(s.runtime_sec,2) << std::endl;
 }
 
+void argv_dump(SongsArgs args, std::string msg) {
+    // return; // spegne ed accende il debug :) 
+    std::cout   << msg + "Argv " 
+                << args.infile << " " 
+                << args.cmdstr << " [:" 
+                << args.subarg << "] " 
+                << args.outfile 
+            << std::endl;
+}
+
+bool text_match(std::string fullstr, std::string substr) {
+    return (text_normalize(fullstr).find(text_normalize(substr)) != std::string::npos);
+}
+
+void  song_write(std::ostream& outSongs, song currSong) {
+    outSongs    << currSong.titolo << ";"
+                << currSong.interprete << ";" 
+                << currSong.anno << ";"
+                << currSong.runtime_min << ";"
+                << currSong.runtime_sec << std::endl;
+}
+
 /* esempio di dispatcher */
 
 void coll_exec_cmd(const VecS inColl, SongsArgs &args, VecS &outColl) {
-    SongsCmd cmd;
-    if (songs_parse_cmd(args.cmdstr, cmd)){
-        switch (cmd) {
+
+    // argv_dump(args, "Nella exec ");
+
+    outFile outFileHandle; // prepara uno stream di out double face file/console
+
+    std::ostream& outSongs = file_wopen(args.outfile, outFileHandle); // comunque vada sara' su uno stream
+
+    if (songs_parse_cmd(args.cmdstr, args.cmdcode)){  // e' qui che carichiamo il cod dell' ope richiesta
+
+        std::cout << "Analizziamo " << args.cmdstr << " e troviamo " << args.cmdcode << " e " << args.subarg << std::endl;
+
+        switch (args.cmdcode) {
 
             case SongsCmd::listTest:
                 // std::cout << "Ci sono " << inColl.size() << " Canzoni\n" << std::endl ;
@@ -223,17 +296,71 @@ void coll_exec_cmd(const VecS inColl, SongsArgs &args, VecS &outColl) {
                 break;
 
             case SongsCmd::filterLen:
+                for (song currSong : inColl) {
+                    if (currSong.runtime_min == std::stoi(args.subarg)) {
+                        // argv_dump(args, " Anno " + std::to_string(currSong.anno) + " uguale in "); 
+                        // outColl.push_back(currSong);
+                        // song_dump(currSong);
+                        song_write(outSongs, currSong); // meccanismo rappezzato con i/o su ostream
+                    }
+                }
+
                 break;
 
-            case SongsCmd::filterTit:
+            case SongsCmd::filterTit: // riversa solo le canzoni che matchano una stringa nel titolo (sub arg)
+                for (song currSong : inColl) {
+                    if (text_match(currSong.titolo, args.subarg))   {
+                        // argv_dump(args, " Anno " + std::to_string(currSong.anno) + " uguale in "); 
+                        // outColl.push_back(currSong);
+                        // song_dump(currSong);
+                        song_write(outSongs, currSong); // meccanismo rappezzato con  i/o su ostream
+
+                    }
+                }
                 break;
 
-            case SongsCmd::invalid:
+            case SongsCmd::filterInt: // riversa solo le canzoni che matchano una stringa nell' interprete (sub arg)
+                for (song currSong : inColl) {
+                    if (text_match(currSong.interprete, args.subarg))  {
+                        // argv_dump(args, " Anno " + std::to_string(currSong.anno) + " uguale in "); 
+                        // outColl.push_back(currSong);
+                        // song_dump(currSong);
+                        song_write(outSongs, currSong); // meccanismo rappezzato con  i/o su ostream
+                    }
+                }
+                break;
+
+            case SongsCmd::filterAnP: // riversa solo le canzoni con un certo Anno di Pubblicazione (sub arg)
+                for (song currSong : inColl) {
+                    if (currSong.anno == std::stoi(args.subarg)) {
+                        // argv_dump(args, " Anno " + std::to_string(currSong.anno) + " uguale in "); 
+                        // outColl.push_back(currSong);
+                        // song_dump(currSong);
+                        song_write(outSongs, currSong); // meccanismo rappezzato con  i/o su ostream
+                    }
+                }
+                break;
+
+            case SongsCmd::sortbyAnP: // ordina la lista per anno di pubb e la riversa integrale
+                break;
+
+            case SongsCmd::sortbyLen: // ordina la lista per durata crescente e la riversa integrale
+                break;
+
+            case SongsCmd::invalid:  // solo per togliersi dai piedi un warning senza spegnarlo per ogni switch
                 break;
         }    
+        file_close(outFileHandle);      //  e file handling su ofstream
 
     } else {
         // std::cout << "Fallisce il parsing dei cmd\n";
+        for (song currSong : inColl) {
+            song_dump(currSong);
+        }
+        showError(errInvalidOp, args.cmdstr);
+        file_close(outFileHandle);      //  e file handling su ofstream
+        exit(1);
+
     }
 }
 
