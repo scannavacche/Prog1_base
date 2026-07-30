@@ -22,7 +22,15 @@ enum SongsErr {
     "Operazione completata. ",
     "Non trovato input file: ",
     "Impossibile creare output file: ",
-    "Syntax: musica inputfile command[:key] outputfile ",
+    "Sintassi: musica inputfile comando[:valore] outputfile \n\
+      commands (case insensitive):  \n\
+        List | L                                        lista il contenuto in input 'As is' \n\
+        FilterLen:x | FilterL:x | FL:x                  match esatto con x Minuti   \n\
+        FilterTit:x | FilterT:x | FT:x                  match parziale con x ovunque in Titolo \n\
+        FilterInt:x | FilterI:x | FI:x                  match parziale con x ovunque in Interprete \n\
+        FilterAnno:x | FilterAnP:x | FilterA:a | FA:x   match esatto con x Anno \n\
+        OrdAnno | OrdAnP | OA                           ordina per Anno (bucket sort discreto) \n\
+        OrdLen | OL                                     ordina per lunghezza totale (std::stable_sort)",
     "Lista delle canzoni in ingresso tristemente vuota ",
     "Operazione non riconosciuta: ",
     "Inversione inattesa di Min e Max ",
@@ -44,7 +52,7 @@ std::string zero_fill(int number, int length)
 }
 
 
-long song_runtime_total (song s){
+long song_runtime_total (const song &s){
     return (s.runtime_min * 60 + s.runtime_sec);
 }
 
@@ -291,7 +299,7 @@ void  song_write(std::ostream& outSongs, song currSong) {
 
 /* esempio di dispatcher */
 
-void coll_exec_cmd(const VecS inColl, SongsArgs &args, VecS &outColl) {
+void coll_exec_cmd(const VecS &inColl, SongsArgs &args, VecS &outColl) {
 
     // argv_dump(args, "Nella exec ");
 
@@ -349,7 +357,7 @@ void coll_exec_cmd(const VecS inColl, SongsArgs &args, VecS &outColl) {
                 break;
 
             case SongsCmd::filterAnP: // riversa solo le canzoni con un certo Anno di Pubblicazione (sub arg)
-                for (song currSong : inColl) {
+                for (const song &currSong : inColl) {
                     if (currSong.anno == std::stoi(args.subarg)) {
                         // argv_dump(args, " Anno " + std::to_string(currSong.anno) + " uguale in "); 
                         // outColl.push_back(currSong);
@@ -385,7 +393,8 @@ void coll_exec_cmd(const VecS inColl, SongsArgs &args, VecS &outColl) {
                         // 
                         // e poi lo visita  come se ogni nodo annuale fosse una nmuova lista
                         //
-                        for (int i = 0; i <= (amax-amin); i++) {
+                        // for (int i = 0; i <= (amax-amin); i++) {
+                        for (std::size_t i = 0; i < aIndex.size(); ++i) {  // meglio cosi', unica fonte
                             for (const song &s : aIndex[i]) {
                                 outColl.push_back(s); // la salvo che non si sa mai nel main() ....
                                 song_write(outSongs, s); 
@@ -400,9 +409,27 @@ void coll_exec_cmd(const VecS inColl, SongsArgs &args, VecS &outColl) {
                     
                 }
 
-            case SongsCmd::sortbyLen: // ordina la lista per durata crescente e la riversa integrale
-                // per questa operazione invece possiamo provare std::sort o una bubblesort mia
+            case SongsCmd::sortbyLen: 
+            
+                // ordina la lista per durata crescente e la riversa integrale
+                // consideriamo l' indice pseudocontinuo, quindi niente bucket sort
+                // possiamo provare qualche modalita' di std::sort o una bubblesort mia
+                //
+                // esplorazione per espolorazione, mi fido ad occhi chiusi e ci metto una lambda 
+                //
+                // prima la duplico per confrontabilita' e poi ordino la copia
+                //
+                outColl = inColl;
 
+                std::stable_sort(
+                    outColl.begin(),
+                    outColl.end(),
+                    [](const song& a, const song& b) {
+                        return song_runtime_total(a) < song_runtime_total(b);
+                    }
+                );
+                // infine la visita
+                for (const song &s : outColl) song_write(outSongs, s);
                 break;
 
             case SongsCmd::invalid:  

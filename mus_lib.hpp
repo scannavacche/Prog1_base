@@ -38,7 +38,6 @@ const CmdAlias CmdTable[] = {
 
     {"LIST",        SongsCmd::listTest},    // enum 0
     {"L",           SongsCmd::listTest},
-    {"SHOW",        SongsCmd::listTest},
 
     {"FILTERLEN",   SongsCmd::filterLen},   // enum 1
     {"FILTERL",     SongsCmd::filterLen},
@@ -113,7 +112,7 @@ using VecStr = std::vector<std::string>;
 using inFile = std::ifstream;
 using outFile = std::ofstream; 
 
-long song_runtime_total (song s); // rende il runtime totale in secondi 
+long song_runtime_total (const song &s); // rende il runtime totale in secondi 
 
 void songs_split_cmd(std::string inparm, std::string &outcmd, std::string &outval); // split di argv[2] se cmd:val
 SongsCmd songs_code_cmd(std::string inparm) ; // normalizza e codifica la string cmd in val di enum univoci
@@ -135,7 +134,7 @@ void file_close(std::ofstream& file); // e un caso di overloading non ce lo vogl
 bool songs_read_line (inFile &file, std::string &line) ;
 bool songs_read_fields(std::string line, song &current);
 int songs_read_int_field(std::istringstream& record);
-void coll_exec_cmd(const VecS inColl, SongsArgs &args, VecS &outColl);
+void coll_exec_cmd(const VecS &inColl, SongsArgs &args, VecS &outColl);
 void song_dump(song s);
 void argv_dump(SongsArgs args, std::string msg);
 void  song_write(std::ostream& outSongs, song currSong);

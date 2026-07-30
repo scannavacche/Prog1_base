@@ -1,6 +1,20 @@
 # Prog1_base
 Mini programma bonus, minimale, aderente alla proposta 
 
+* Sintassi al lancio con elenco funzioni ammesse
+
+** Sintassi: musica inputfile comando[:valore] outputfile
+      commands (case insensitive):
+-        List | L                                        lista il contenuto in input 'As is'
+-        FilterLen:x | FilterL:x | FL:x                  match esatto con x Minuti
+-        FilterTit:x | FilterT:x | FT:x                  match parziale con x ovunque in Titolo
+-        FilterInt:x | FilterI:x | FI:x                  match parziale con x ovunque in Interprete
+-        FilterAnno:x | FilterAnP:x | FilterA:a | FA:x   match esatto con x Anno
+-        OrdAnno | OrdAnP | OA                           ordina per Anno (bucket sort discreto)
+-        OrdLen | OL                                     ordina per lunghezza totale (std::stable_sort)
+
+---
+
 Indice minimale delle librerie:
 
 Oggetto/funzione	                    Header
