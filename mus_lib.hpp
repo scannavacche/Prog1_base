@@ -75,6 +75,8 @@ enum SongsErr {
     errNot4Args,
     errEmptyColl,
     errInvalidOp,
+    errMinMax,
+    errUnderdate, 
 
     errCount // contatore di items disponibili in enum
 };
@@ -117,6 +119,7 @@ void songs_split_cmd(std::string inparm, std::string &outcmd, std::string &outva
 SongsCmd songs_code_cmd(std::string inparm) ; // normalizza e codifica la string cmd in val di enum univoci
 std::string text_normalize(std::string &inparm) ;
 bool text_match(std::string fullstr, std::string substr);
+void coll_find_limits (const VecS &s, int& amin, int& amax);
 
 bool songs_parse_args(int argc, char *argv[], SongsArgs& args); // parse degli argv[], rende true se ok
 bool songs_parse_cmd(const std::string& text, SongsCmd& cmd);

@@ -10,7 +10,9 @@ enum SongsErr {
     errNotOKOut,
     errNot4Args,
     errEmptyColl,
->    errInvalidOp,
+    errInvalidOp,
+    errMinMax,
+    errUnderdate,
 
     errCount // contatore di items disponibili in enum
 };
@@ -20,9 +22,11 @@ enum SongsErr {
     "Operazione completata. ",
     "Non trovato input file: ",
     "Impossibile creare output file: ",
-    "Syntax: musica inputfile command[:key] outputfile",
-    "Lista delle canzoni in ingresso tristemente vuota",
-    "Operazione non riconosciuta: "
+    "Syntax: musica inputfile command[:key] outputfile ",
+    "Lista delle canzoni in ingresso tristemente vuota ",
+    "Operazione non riconosciuta: ",
+    "Inversione inattesa di Min e Max ",
+    "Panic at the disco! La ricerca dell'anno minimo ha fallito "
 
 };
 
@@ -263,6 +267,20 @@ bool text_match(std::string fullstr, std::string substr) {
     return (text_normalize(fullstr).find(text_normalize(substr)) != std::string::npos);
 }
 
+void coll_find_limits (const VecS &col, int& amin, int& amax) {
+    if (col.empty()) {
+        amin = 0;
+        amax = 0;
+    } else {
+        //  c'e' almeno un elemento, procediamo
+        amin = col[0].anno; amax = amin;
+        for (const song &s : col) {
+            if (s.anno < amin) amin = s.anno;
+            if (s.anno > amax) amax = s.anno; 
+        }
+    }
+}
+
 void  song_write(std::ostream& outSongs, song currSong) {
     outSongs    << currSong.titolo << ";"
                 << currSong.interprete << ";" 
@@ -283,7 +301,7 @@ void coll_exec_cmd(const VecS inColl, SongsArgs &args, VecS &outColl) {
 
     if (songs_parse_cmd(args.cmdstr, args.cmdcode)){  // e' qui che carichiamo il cod dell' ope richiesta
 
-        std::cout << "Analizziamo " << args.cmdstr << " e troviamo " << args.cmdcode << " e " << args.subarg << std::endl;
+        // std::cout << "Analizziamo " << args.cmdstr << " e troviamo " << args.cmdcode << " e " << args.subarg << std::endl;
 
         switch (args.cmdcode) {
 
@@ -341,13 +359,55 @@ void coll_exec_cmd(const VecS inColl, SongsArgs &args, VecS &outColl) {
                 }
                 break;
 
-            case SongsCmd::sortbyAnP: // ordina la lista per anno di pubb e la riversa integrale
-                break;
+            case SongsCmd::sortbyAnP: 
+                //
+                // ordina la lista per anno di pubb e la riversa integrale
+                // per questa operazione uso il bucket sort suggerito (siamo su naturali)
+                // e lo includiamo in un blocco per circoscrivere lo scope delle dichiarazioni locali
+                //
+                {
+                    int amin, amax;
+                    coll_find_limits(inColl, amin, amax);
+                    if (amax >= amin) {
+                        std::vector<VecS> aIndex(1 + amax - amin);
+                        //
+                        // prima classifica le canzoni per anno di pubblicazione
+                        //
+                        for (const song &s : inColl) {
+                            int icurr = s.anno - amin; 
+                            if (icurr < 0) {
+                                showError(SongsErr::errUnderdate, "Anno " + std::to_string(s.anno)+ " precede min: " + std::to_string(amin));
+                                exit(1);
+                            } else {
+                                aIndex[icurr].push_back(s);
+                            }
+                        }
+                        // 
+                        // e poi lo visita  come se ogni nodo annuale fosse una nmuova lista
+                        //
+                        for (int i = 0; i <= (amax-amin); i++) {
+                            for (const song &s : aIndex[i]) {
+                                outColl.push_back(s); // la salvo che non si sa mai nel main() ....
+                                song_write(outSongs, s); 
+                            }
+                        }
+
+                    } else {
+                        showError(SongsErr::errMinMax, "Anni da " + std::to_string(amin)+ " a " + std::to_string(amax));
+                        exit(1);
+                    }
+                    break;
+                    
+                }
 
             case SongsCmd::sortbyLen: // ordina la lista per durata crescente e la riversa integrale
+                // per questa operazione invece possiamo provare std::sort o una bubblesort mia
+
                 break;
 
-            case SongsCmd::invalid:  // solo per togliersi dai piedi un warning senza spegnarlo per ogni switch
+            case SongsCmd::invalid:  
+                // solo per togliersi dai piedi un warning senza spegnarlo per ogni switch
+                // in realta' invalid produce gia' una lista a console con l'avviso di comando non valido
                 break;
         }    
         file_close(outFileHandle);      //  e file handling su ofstream
