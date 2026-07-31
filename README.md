@@ -1,6 +1,25 @@
 # Prog1_base
 Mini programma bonus, minimale, aderente alla proposta 
 
+Versione 2026-07-31
+
+* Sintassi al lancio con elenco funzioni ammesse
+
+**   Sintassi: musica fileinput.csv <operazione> <valore> [fileoutput.csv]
+***      <operazione> (case insensitive) di base
+-        durata <m>                                      estrae canzoni con durata sino a <m> minuti
+-        cerca <stringa>                                 estrae canzoni con <stringa> in titolo o interprete
+-        anno <anno>                                     estrae canzoni con <anno> indicato
+-        ordina                                          ordina per Anno
+***      <operazione> (case insensitive) in sviluppo
+-        cercai <stringa>                                estrae canzoni con <stringa> in interprete
+-        cercat <stringa>                                estrae canzoni con <stringa> in titolo
+-        List | L                                        lista il contenuto in input 'As is'
+-        OrdLen | OL                                     ordina per lunghezza totale (std::stable_sort)
+
+
+Versione precedente, non ancora aderente
+
 * Sintassi al lancio con elenco funzioni ammesse
 
 ** Sintassi: musica inputfile comando[:valore] outputfile

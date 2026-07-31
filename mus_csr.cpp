@@ -45,23 +45,10 @@ void collection_write(const VecS &outCollection, SongsArgs &args){
 }
 
 
-VecS collection_list(VecS inColl){
+VecS collection_anno(const VecS &inColl, int anno){
     VecS outC;
     for (const song &currSong : inColl) {
-        outC.push_back(currSong);
-        debug_song_dump(currSong);
-    }
-    return outC;
-};
-
-VecS collection_durata(const VecS &inColl, int minuti){
-    VecS outC;
-    long tlen = minuti * 60L;  // ci portiamo a longint, non costa nulla
-    for (const song &currSong : inColl) {
-
-        // DBG("Test " << song_runtime_total(currSong) << " <= " << tlen);
-
-        if (song_runtime_total(currSong) <= tlen) {
+        if (currSong.anno == anno) {
             outC.push_back(currSong);
             debug_song_dump(currSong);
         }
@@ -104,16 +91,29 @@ VecS collection_cercai(const VecS &inColl, std::string tstr) {
     return outC;
 }
 
-VecS collection_anno(const VecS &inColl, int anno){
+VecS collection_durata(const VecS &inColl, int minuti){
     VecS outC;
+    long tlen = minuti * 60L;  // ci portiamo a longint, non costa nulla
     for (const song &currSong : inColl) {
-        if (currSong.anno == anno) {
+
+        // DBG("Test " << song_runtime_total(currSong) << " <= " << tlen);
+
+        if (song_runtime_total(currSong) <= tlen) {
             outC.push_back(currSong);
             debug_song_dump(currSong);
         }
     }
     return outC;
 }
+
+VecS collection_list(VecS inColl){
+    VecS outC;
+    for (const song &currSong : inColl) {
+        outC.push_back(currSong);
+        debug_song_dump(currSong);
+    }
+    return outC;
+};
 
 VecS collection_ordina(const VecS &inColl){
     VecS outColl;
@@ -164,6 +164,7 @@ VecS collection_ordlen(const VecS &inColl) {
     );
     return outColl;
 }
+
 
 bool app_parse_args(int argc, char *argv[], SongsArgs& args)
 {

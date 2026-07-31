@@ -40,8 +40,6 @@ std::cerr << "des0: " << cmd0
 #include <cmath>        // std::abs
 #include <regex>        // std::regex (check anno e minuto)
 
-// record singola canzone
-
 struct song {
     std::string titolo;
     std::string interprete;
@@ -49,6 +47,16 @@ struct song {
     int runtime_min;
     int runtime_sec;
 };
+
+
+using VecS = std::vector<song>;
+using VecStr = std::vector<std::string>;
+
+using inFile = std::ifstream;
+using outFile = std::ofstream; 
+
+
+// record singola canzone
 
 
 // codici normalizzati per i comandi richiesti come stringa
@@ -133,47 +141,46 @@ enum SongsErr {
     errCount // contatore di items disponibili in enum
 };
 
-// e relativa chiamata al messaggio di errore
 
-void showError(SongsErr err, const std::string &detail);
-void showHelp();
+// funzioni di base (string management)
+
 bool null_string(std::string s);
-std::string zero_fill(int number, int length); 
-
-// regalino dall' AI
-int parse_year(const std::string& text);
-int parse_minute(const std::string& text);
-
-using VecS = std::vector<song>;
-using VecStr = std::vector<std::string>;
-
-using inFile = std::ifstream;
-using outFile = std::ofstream; 
-
-long song_runtime_total (const song &s); // rende il runtime totale in secondi 
-
-void songs_split_cmd(std::string inparm, std::string &outcmd, std::string &outval); // split di argv[2] se cmd:val
-SongsCmd songs_code_cmd(std::string inparm) ; // normalizza e codifica la string cmd in val di enum univoci
 std::string text_normalize(const std::string &inparm) ;
 bool text_match(std::string fullstr, std::string substr);
-void coll_find_limits (const VecS &s, int& amin, int& amax);
+std::string zero_fill(int number, int length); 
 
-bool songs_parse_cmd(const std::string& text, SongsCmd& cmd);
-
-
-inFile file_ropen(std::string song_filename_in); // apre il file di input in modeo r 
-std::ostream& file_wopen(const std::string& filename, outFile& fileOut); // tenta di aprire in scrittura
+// file managemnt (close con overloading if/of, read open, rewrite open)
 
 void file_close(std::ifstream& file);
 void file_close(std::ofstream& file); // e un caso di overloading non ce lo vogliamo concedere?
+inFile file_ropen(std::string song_filename_in); // apre il file di input in modeo r 
+std::ostream& file_wopen(const std::string& filename, outFile& fileOut); // tenta di aprire in scrittura
 
+// songs management ed helper di collection
 
-bool songs_read_line (inFile &file, std::string &line) ;
-bool songs_read_fields(std::string line, song &current);
+void coll_find_limits (const VecS &s, int& amin, int& amax);
+bool songs_parse_cmd(const std::string& text, SongsCmd& cmd);
 int songs_read_int_field(std::istringstream& record);
-void debug_song_dump(song s);
-void debug_argv_dump(SongsArgs args, std::string msg);
-void  song_write(std::ostream& outSongs, song currSong);
+bool songs_read_fields(std::string line, song &current);
+bool songs_read_line (inFile &file, std::string &line) ;
+int songs_read_int_field(std::istringstream& record);
+long song_runtime_total (const song &s); // rende il runtime totale in secondi 
+void song_write(std::ostream& outSongs, song currSong);
 
+// debug, autoestinguenti (attive solo con -DDEBUG)
+
+void debug_argv_dump(SongsArgs args, std::string msg);
+void debug_song_dump(song s);
+void showError(SongsErr err, const std::string &detail);
+void showHelp();
+
+// regalino dall' AI
+
+int parse_year(const std::string& text);
+int parse_minute(const std::string& text);
+
+// deprecated
+
+void songs_split_cmd(std::string inparm, std::string &outcmd, std::string &outval); // split di argv[2] se cmd:val
 
 #endif
