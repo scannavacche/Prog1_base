@@ -1,32 +1,89 @@
 #include "mus_lib.hpp"
+#include "mus_csr.hpp"
 
+bool app_exec_cmd(const VecS &inColl, SongsArgs &args, VecS &outColl) {
+
+    debug_argv_dump(args, "Nella exec ");
+  
+    //
+    //  non serve piu' il parsing dei comandi qui perche' lo abbiamo gia' fatto in app_parse_arg
+    //  ed abbiamo gia' args.cmdcode (da verificare se da tutti i rami della parse_arg)
+    //
+    // if (songs_parse_cmd(args.cmdstr, args.cmdcode)){  // e' qui che carichiamo il cod dell' ope richiesta
+
+    if (args.cmdcode != SongsCmd::invalid) {
+
+        switch (args.cmdcode) {
+
+            case SongsCmd::listTest:
+                outColl = collection_list(inColl); // il comando List non ha argomenti
+                break;
+
+            case SongsCmd::filterLen:
+                outColl = collection_durata(inColl,parse_minute(args.subarg)); // sino a n minuti
+                break;
+
+            case SongsCmd::filterAll: // riversa le canzoni che matchano una stringa in titolo o interprete
+                outColl = collection_cerca(inColl, args.subarg);
+                break;
+
+            case SongsCmd::filterTit: // riversa solo le canzoni che matchano una stringa nel titolo 
+                outColl = collection_cercat(inColl, args.subarg);
+                break;
+
+            case SongsCmd::filterInt: // riversa solo le canzoni che matchano una stringa nell' interprete 
+                outColl = collection_cercai(inColl, args.subarg);
+                break;
+
+            case SongsCmd::filterAnP: // riversa solo le canzoni con un certo Anno di Pubblicazione (sub arg)
+                outColl = collection_anno(inColl, parse_year(args.subarg)); 
+                break;
+
+            case SongsCmd::sortbyAnP: 
+                //
+                // ordina la lista per anno di pubb e la riversa integrale
+                // per questa operazione uso il bucket sort suggerito (siamo su naturali)
+                outColl = collection_ordina(inColl);
+                break;
+
+            case SongsCmd::sortbyLen: 
+                //
+                // ordina la lista per durata crescente e la riversa integrale
+                //
+                outColl = collection_ordlen(inColl);
+                break;
+            case SongsCmd::getHelp:
+                showHelp();
+                break;
+            case SongsCmd::invalid:  
+                // solo per togliersi dai piedi un warning senza spegnerlo per ogni switch
+                // in realta' invalid produce gia' una lista a console con l'avviso di comando non valido
+                break;
+        }  // end switch (args.cmdcode) 
+        
+    } else { // args.cmdcode == invalid
+        
+        for (song currSong : inColl) {
+            debug_song_dump(currSong);
+        }
+        showError(errInvalidOp, args.cmdstr);
+        return false;
+
+    }
+    return true;
+}
 
 
 int main(int argc, char *argv[])
 {
     SongsArgs argstr;
-    song currSong;
     VecS inCollection, outCollection;
 
-    if (songs_parse_args(argc, argv, argstr)) {
-        std::string line;
-        inFile inSongs = file_ropen(argstr.infile);
-        while (songs_read_line(inSongs, line)) {
-            if (songs_read_fields(line, currSong)) {
-                inCollection.push_back(currSong);
-            }             
-        }
-        file_close(inSongs);
-
-        if (inCollection.empty()) {
-            showError(SongsErr::errEmptyColl, "");
-            exit(1);
-        } else {
-            //
-            // std::cout << "e qui comincia il bello (il dispatcher dei comandi)" << std::endl;
-            //
-            // argv_dump(argstr, "Prima della exec ");
-            coll_exec_cmd(inCollection, argstr, outCollection);
+    if (app_parse_args(argc, argv, argstr)) {
+        if (collection_read (inCollection, argstr)) {
+            debug_argv_dump(argstr, "Prima del dispatcher ");
+            if (app_exec_cmd(inCollection, argstr, outCollection))  
+                if (!outCollection.empty()) collection_write(outCollection, argstr);
         };
 
         return 0;
