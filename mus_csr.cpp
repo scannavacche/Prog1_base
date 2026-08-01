@@ -40,7 +40,9 @@ void collection_write(const VecS &outCollection, SongsArgs &args){
     // oppure su std::cout se il file non e' stato indicato tra gli argomenti 
     //
     std::ostream& outSongs = file_wopen(args.outfile, outFileHandle); 
-    for (const song &s : outCollection) song_write(outSongs, s); // write su ostream outSongs con redirect <<
+    for (const song &s : outCollection) {
+        song_write(outSongs, s); // write su ostream outSongs con redirect <<
+    };
     file_close(outFileHandle);      //  e file handling su ofstream outfileHandle
 }
 
@@ -207,11 +209,9 @@ bool app_parse_args(int argc, char *argv[], SongsArgs& args)
             //
             if (probe_cmd == SongsCmd::getHelp)  { 
                 showHelp(); 
-                return false;  
+                exit(0);  // scelta obbligata, comando valido ma non per leggere coll  
             } else { // ha trovato un comando valido in posizione [1] sbagliata
-
                 DBG("E' un comando in 1 ma non e' HELP: " << argv[1] << " = " << probe_cmd);
-                
                 probe_cmd = SongsCmd::invalid;
             };
         } else {   // bene, non e' un comando, assumiamo che sia fileinput.csv
@@ -262,7 +262,7 @@ bool app_parse_args(int argc, char *argv[], SongsArgs& args)
                         };
                         args.subarg = argv[3];  // buona la stringa per la ricerca
                         
-                        if (argc == 5) args.outfile = argv[4]; // se non c'e' resta nullstr da init
+                        if (argc >= 5) args.outfile = argv[4]; // se non c'e' resta nullstr da init
 
                         break;
 

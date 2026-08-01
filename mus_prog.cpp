@@ -47,7 +47,7 @@ bool app_exec_cmd(const VecS &inColl, SongsArgs &args, VecS &outColl) {
                 break;
             case SongsCmd::getHelp:
                 showHelp();
-                break;
+                exit(0);  // uscita obbligata: comando valido ma nessuna coll da leggere, deve evitare exit(1)
             case SongsCmd::invalid:  
                 // solo per togliersi dai piedi un warning senza spegnerlo per ogni switch
                 // in realta' invalid produce gia' una lista a console con l'avviso di comando non valido

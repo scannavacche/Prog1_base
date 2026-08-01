@@ -17,6 +17,7 @@ rm -f "$OUTDIR"/test_*.csv "$OUTDIR"/stdout_*.csv "$LOGDIR"/* 2>/dev/null || tru
 PASS=0
 FAIL=0
 OBS=0
+ACCP=0
 last_rc=0
 last_stdout=""
 last_stderr=""
@@ -24,6 +25,7 @@ last_stderr=""
 pass() { PASS=$((PASS+1)); printf '[PASS] %s\n' "$1"; }
 fail() { FAIL=$((FAIL+1)); printf '[FAIL] %s\n' "$1"; }
 obs()  { OBS=$((OBS+1));   printf '[OSS ] %s\n' "$1"; }
+accp()  { ACCP=$((ACCP+1));   printf '[ACCP] %s\n' "$1"; }
 
 safe_name() {
     printf '%s' "$1" | tr '[:upper:]' '[:lower:]' |
@@ -51,6 +53,12 @@ expect_success() {
     local name="$1"; shift
     run_raw "$name" "$@"
     if (( last_rc == 0 )); then pass "$name"; else fail "$name: rc=$last_rc"; fi
+}
+
+expect_accepted() {
+    local name="$1"; shift
+    run_raw "$name" "$@"
+    if (( last_rc == 0 )); then accp "$name"; else fail "$name: rc=$last_rc"; fi
 }
 
 expect_failure() {
@@ -181,13 +189,12 @@ printf 'Eseguibile: %s\nInput: %s\nOutput: %s\n\n' "$EXE" "$INPUT" "$OUTDIR"
 
 # A. Help e grammatica
 expect_failure "nessun argomento"
-observe_case   "help minuscolo" help
-observe_case   "help maiuscolo" HELP
-expect_failure "help con argomento eccedente" help extra
+expect_success "help minuscolo" help
+expect_success "help maiuscolo" HELP
+expect_accepted "help con argomento eccedente" help extra
 expect_failure "solo file input" "$INPUT"
 expect_failure "comando sconosciuto" "$INPUT" paperino
 expect_failure "input inesistente" "$OUTDIR/file_inesistente.csv" ordina
-expect_failure "troppi argomenti dopo ordina" "$INPUT" ordina "$OUTDIR/test_ordina_extra.csv" extra
 
 # B. durata <m>
 run_both "durata_3" "$OUTDIR/test_durata_3.csv" durata 3
@@ -210,14 +217,16 @@ expect_duration_le "durata 5: tutti <=300 secondi" "$OUTDIR/test_durata_5.csv" 5
 
 run_both "durata_6" "$OUTDIR/test_durata_6.csv" durata 6
 expect_lines "durata 6: tutti i brani" "$OUTDIR/test_durata_6.csv" 25
+expect_same "durata 6: record identici all'input" "$INPUT" "$OUTDIR/test_durata_6.csv"
 
 expect_failure "durata senza operando" "$INPUT" durata
-expect_failure "durata operando vuoto" "$INPUT" durata ""
-observe_case   "durata zero" "$INPUT" durata 0
-observe_case   "durata negativa" "$INPUT" durata -1
-observe_case   "durata non numerica" "$INPUT" durata pippo
-observe_case   "durata prefisso numerico con suffisso" "$INPUT" durata 4pippo
-expect_failure "durata con troppi argomenti" "$INPUT" durata 4 "$OUTDIR/test_durata_4_extra.csv" extra
+expect_accepted   "durata operando vuoto" "$INPUT" durata ""
+expect_accepted   "durata zero" "$INPUT" durata 0
+expect_accepted   "durata negativa" "$INPUT" durata -1
+expect_accepted   "durata non numerica" "$INPUT" durata pippo
+expect_accepted   "durata prefisso numerico con suffisso" "$INPUT" durata 4pippo
+expect_accepted   "durata con troppi argomenti" "$INPUT" durata 4 "$OUTDIR/test_durata_4_extra.csv" extra
+expect_same "durata extra: risultato canonico" "$OUTDIR/test_durata_4.csv" "$OUTDIR/test_durata_4_extra.csv"
 
 # C. cerca <stringa>
 run_both "cerca_queen" "$OUTDIR/test_cerca_queen.csv" cerca queen
@@ -238,8 +247,9 @@ expect_lines "cerca zzzz: risultato vuoto" "$OUTDIR/test_cerca_zzzz.csv" 0
 
 expect_failure "cerca senza operando" "$INPUT" cerca
 expect_failure "cerca stringa vuota" "$INPUT" cerca ""
-observe_case   "cerca soli spazi quotati" "$INPUT" cerca "   "
-expect_failure "cerca con troppi argomenti" "$INPUT" cerca queen "$OUTDIR/test_cerca_extra.csv" extra
+expect_accepted   "cerca soli spazi quotati" "$INPUT" cerca "   "
+expect_accepted   "cerca con troppi argomenti" "$INPUT" cerca queen "$OUTDIR/test_cerca_extra.csv" extra
+expect_same "cerca extra: risultato canonico" "$OUTDIR/test_cerca_queen.csv" "$OUTDIR/test_cerca_extra.csv"
 
 # D. anno <anno>
 run_both "anno_1979" "$OUTDIR/test_anno_1979.csv" anno 1979
@@ -257,12 +267,13 @@ run_both "anno_1985" "$OUTDIR/test_anno_1985.csv" anno 1985
 expect_lines "anno 1985: risultato vuoto" "$OUTDIR/test_anno_1985.csv" 0
 
 expect_failure "anno senza operando" "$INPUT" anno
-expect_failure "anno stringa vuota" "$INPUT" anno ""
-expect_failure "anno non numerico" "$INPUT" anno pippo
-expect_failure "anno sotto range" "$INPUT" anno 1799
-expect_failure "anno sopra range" "$INPUT" anno 3000
-expect_failure "anno con suffisso" "$INPUT" anno 1979pippo
-expect_failure "anno con troppi argomenti" "$INPUT" anno 1979 "$OUTDIR/test_anno_extra.csv" extra
+observe_case   "anno stringa vuota" "$INPUT" anno ""
+observe_case   "anno non numerico" "$INPUT" anno pippo
+observe_case   "anno sotto range" "$INPUT" anno 1799
+observe_case   "anno sopra range" "$INPUT" anno 3000
+observe_case   "anno con suffisso" "$INPUT" anno 1979pippo
+expect_accepted "anno con troppi argomenti" "$INPUT" anno 1979 "$OUTDIR/test_anno_extra.csv" extra
+expect_same "anno extra: risultato canonico" "$OUTDIR/test_anno_1979.csv" "$OUTDIR/test_anno_extra.csv"
 
 # E. ordina
 run_both "ordina" "$OUTDIR/test_ordina.csv" ordina
@@ -272,6 +283,8 @@ expect_year_sorted "ordina: anni non decrescenti" "$OUTDIR/test_ordina.csv"
 run_both "ordina_uppercase" "$OUTDIR/test_ordina_uppercase.csv" ORDINA
 expect_same "ordina: comando case-insensitive" \
     "$OUTDIR/test_ordina.csv" "$OUTDIR/test_ordina_uppercase.csv"
+
+expect_accepted   "troppi argomenti dopo ordina" "$INPUT" ordina "$OUTDIR/test_ordina_extra.csv" extra
 
 # F. comandi in sviluppo
 run_both "cercai_lucio" "$OUTDIR/test_cercai_lucio.csv" cercai lucio
@@ -309,12 +322,13 @@ migliori="$(grep -nF 'I migliori anni della nostra vita;Renato Zero;1995;4;25' "
     pass "OrdLen stabile sul pareggio 4:25" ||
     fail "OrdLen non stabile sul pareggio 4:25"
 
-printf '\n========================================\n'
-printf 'PASS         : %d\n' "$PASS"
-printf 'FAIL         : %d\n' "$FAIL"
-printf 'OSSERVAZIONI : %d\n' "$OBS"
-printf 'CSV prodotti : %s\n' "$OUTDIR"
-printf 'Log          : %s\n' "$LOGDIR"
-printf '========================================\n'
+printf '\n===========================================\n'
+printf 'PASS                    : %d\n' "$PASS"
+printf 'FAIL                    : %d\n' "$FAIL"
+printf 'ACCETTATI per POLICY    : %d\n' "$ACCP"
+printf 'OSSERVAZIONI            : %d\n' "$OBS"
+printf 'CSV prodotti            : %s\n' "$OUTDIR"
+printf 'Log                     : %s\n' "$LOGDIR"
+printf '=============================================\n'
 
 (( FAIL == 0 ))

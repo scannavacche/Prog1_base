@@ -168,7 +168,7 @@ bool songs_parse_cmd(const std::string &pippo, SongsCmd& cmd) {
     return false;
 }
 
-int songs_read_int_field(std::istringstream& record)
+int songs_read_int_field(std::istringstream& record, std::string &raw_val)
 {
     std::string field;
     int value;
@@ -183,6 +183,7 @@ int songs_read_int_field(std::istringstream& record)
     if (!(conv >> value))
         return 9998;
 
+    raw_val = field;
     return value;
 }
 
@@ -231,15 +232,15 @@ bool songs_read_fields(std::string line, song &current){
     // con i campi numeri cambiamo strategie e rendo il valore intero filtrando da qui se era illeggibile
     // Leggo Anno
 
-    current.anno = songs_read_int_field(record); // rende 9999 se non valido o illeggibile
+    current.anno = songs_read_int_field(record, current.anno_raw); // rende 9999 se non valido o illeggibile
     if (current.anno == 9999) return false;
 
     // Leggo Minuti (se non sono validi i minuti, non provo neanche con i secondi e lascio runtime = 0)
 
-    current.runtime_min = songs_read_int_field(record);
+    current.runtime_min = songs_read_int_field(record, current.runtime_min_raw);
     if (current.runtime_min == 9999) return false;
 
-    current.runtime_sec = songs_read_int_field(record);
+    current.runtime_sec = songs_read_int_field(record, current.runtime_sec_raw);
     if (current.runtime_sec == 9999) return false;
 
     if (current.runtime_min > 9000) {  // condizione generica di errore (9998 e sviluppi futuri)
@@ -271,9 +272,9 @@ void song_write(std::ostream& outSongs, song currSong) {
     //
     outSongs    << currSong.titolo << ";"
                 << currSong.interprete << ";" 
-                << currSong.anno << ";"
-                << currSong.runtime_min << ";"
-                << currSong.runtime_sec << std::endl;
+                << currSong.anno_raw << ";"
+                << currSong.runtime_min_raw << ";"
+                << currSong.runtime_sec_raw << std::endl;
 }
 
 // aiutino dall' AI
@@ -299,6 +300,17 @@ int parse_minute(const std::string& text)
     if (!std::regex_match(text, minutes_pattern)) return 0;
     int minutes = std::atoi(text.c_str());
     if (minutes < 0 || minutes > 99 ) return 0; else return minutes;   
+}
+
+int parse_seconds(const std::string& text)
+{
+    //
+    // valida una stringa tra 00 e 59 e la rende come valore intero per secondi
+    //
+    static const std::regex seconds_pattern(R"(^[0-9]+$)");
+    if (!std::regex_match(text, seconds_pattern)) return 0;
+    int seconds = std::atoi(text.c_str());
+    if (seconds < 0 || seconds > 59 ) return 0; else return seconds;   
 }
 
 
@@ -327,7 +339,16 @@ void debug_song_dump(song s){
         <<  s.interprete << " | " 
         <<  s.anno << " | " 
         <<  zero_fill(s.runtime_min,2) << ":" 
-        <<  zero_fill(s.runtime_sec,2) 
+        <<  zero_fill(s.runtime_sec,2)   // prima strippa e poi 0-padda ma e' solo in debug
+    );
+}
+
+void debug_runtime_len(song s) {
+    DBG(
+        s.titolo 
+        << " raw=" << s.runtime_min_raw << ":" << s.runtime_sec_raw
+        << " value=" << s.runtime_min << ":" <<  s.runtime_sec 
+        << " total=" << song_runtime_total(s)
     );
 }
 

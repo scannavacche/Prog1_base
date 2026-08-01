@@ -49,9 +49,15 @@ using VecStr = std::vector<std::string>;
 struct song {
     std::string titolo;
     std::string interprete;
-    int anno;           // valutare la trasformazione in stringa
-    int runtime_min;    // per conservare lo zero-padding originale, non omogeneo
-    int runtime_sec;    // per ora sono solo due record con i secondi paddati, un caso o un test?
+
+    int anno;           // E' richiesta la riproduzione fedele in fileout dei dati di input
+    int runtime_min;    // Solo due record hanno dati numerici con zero-padding sui secondi.
+    int runtime_sec;    // un caso o un test di compliance? La soluzione conservativa e'
+    // lavorare con gli interi ma preservare le stringhe originali per la scrittura finale.
+
+    std::string anno_raw;
+    std::string runtime_min_raw;
+    std::string runtime_sec_raw;
 };  
 
 using VecS = std::vector<song>;
@@ -158,7 +164,7 @@ std::ostream& file_wopen(const std::string& filename, outFile& fileOut); // tent
 
 void coll_find_limits (const VecS &s, int& amin, int& amax);
 bool songs_parse_cmd(const std::string& text, SongsCmd& cmd);
-int songs_read_int_field(std::istringstream& record);
+int songs_read_int_field(std::istringstream& record, std::string &raw_val);
 bool songs_read_fields(std::string line, song &current);
 bool songs_read_line (inFile &file, std::string &line) ;
 int songs_read_int_field(std::istringstream& record);
@@ -169,6 +175,7 @@ void song_write(std::ostream& outSongs, song currSong);
 
 void debug_argv_dump(SongsArgs args, std::string msg);
 void debug_song_dump(song s);
+void debug_runtime_len(song s);
 void showError(SongsErr err, const std::string &detail);
 void showHelp();
 
@@ -176,6 +183,7 @@ void showHelp();
 
 int parse_year(const std::string& text);
 int parse_minute(const std::string& text);
+int parse_seconds(const std::string& text);
 
 // deprecated
 
