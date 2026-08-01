@@ -40,24 +40,21 @@ std::cerr << "des0: " << cmd0
 #include <cmath>        // std::abs
 #include <regex>        // std::regex (check anno e minuto)
 
-struct song {
-    std::string titolo;
-    std::string interprete;
-    int anno;
-    int runtime_min;
-    int runtime_sec;
-};
-
-
-using VecS = std::vector<song>;
-using VecStr = std::vector<std::string>;
-
 using inFile = std::ifstream;
 using outFile = std::ofstream; 
-
+using VecStr = std::vector<std::string>;
 
 // record singola canzone
 
+struct song {
+    std::string titolo;
+    std::string interprete;
+    int anno;           // valutare la trasformazione in stringa
+    int runtime_min;    // per conservare lo zero-padding originale, non omogeneo
+    int runtime_sec;    // per ora sono solo due record con i secondi paddati, un caso o un test?
+};  
+
+using VecS = std::vector<song>;
 
 // codici normalizzati per i comandi richiesti come stringa
 
@@ -137,6 +134,7 @@ enum SongsErr {
     errMinMax,
     errUnderdate, 
     errNullValue,
+    errNotImplemented,
 
     errCount // contatore di items disponibili in enum
 };

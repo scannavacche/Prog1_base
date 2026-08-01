@@ -6,8 +6,8 @@ CXX      = g++
  LDFLAGS  =
 
 # versione debug
-## CXXFLAGS = -std=c++17 -O0 -Wall -g -DDEBUG
-## LDFLAGS  = -g
+# CXXFLAGS = -std=c++17 -O0 -Wall -g -DDEBUG
+# LDFLAGS  = -g
 
 # versione silent, dopo espansione silenzia alcuni warning mirati (usati per FCN)
 # CXXFLAGS = -std=c++17 -O2 -Wall -g -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-local-typedefs -Wpedantic -Wno-sign-compare -Wno-unused-function

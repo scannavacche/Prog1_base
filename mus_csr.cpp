@@ -286,7 +286,7 @@ bool app_parse_args(int argc, char *argv[], SongsArgs& args)
                             args.subarg = argv[3]; 
                         };
                         
-                        if (argc == 5) args.outfile = argv[4]; // se non c'e' resta nullstr da init
+                        if (argc >= 5) args.outfile = argv[4]; // se non c'e' resta nullstr da init
                         break;
                     
                     default:
