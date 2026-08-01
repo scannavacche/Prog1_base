@@ -18,6 +18,45 @@ Versione 2026-07-31
 -        OrdLen | OL                                     ordina per lunghezza totale (std::stable_sort)
 
 
+* Test automatici di test_musica.sh
+
+** Esito ultimo:
+
+PASS: 135
+FAIL: 0
+ACCETTATI per POLICY: 11
+OSSERVAZIONI: 0
+
+** 11 Test fallibili ma forzati come accettabili per policy
+
+*** Condizioni anomale accettate ignorando l'anomalia (passa comunque un comando valido e completo)
+
+- expect_accepted "help con argomento eccedente" help extra
+- expect_accepted "durata con troppi argomenti" "$INPUT" durata 4 "$OUTDIR/test_durata_4_extra.csv" extra
+- expect_accepted "cerca con troppi argomenti" "$INPUT" cerca queen "$OUTDIR/test_cerca_extra.csv" extra
+- expect_accepted "anno con troppi argomenti" "$INPUT" anno 1979 "$OUTDIR/test_anno_extra.csv" extra
+- expect_accepted "troppi argomenti dopo ordina" "$INPUT" ordina "$OUTDIR/test_ordina_extra.csv" extra
+
+*** Condizioni anomale accettate con valore del parametro nullo
+
+- expect_accepted "cerca soli spazi quotati" "$INPUT" cerca "   "
+
+*** Condizioni anomale accettate con valore del parametro nullo forzato a "0"
+
+- expect_accepted "anno stringa vuota" "$INPUT" anno ""
+- expect_accepted "durata operando vuoto" "$INPUT" durata ""
+- expect_accepted "durata zero" "$INPUT" durata 0
+
+*** Controlli non attivati, l'anno e' ancora un naturale libero
+
+- expect_accepted "anno sotto range" "$INPUT" anno 1799
+- expect_accepted "anno sopra range" "$INPUT" anno 3000
+
+
+---
+
+\newpage
+
 Versione precedente, non ancora aderente
 
 * Sintassi al lancio con elenco funzioni ammesse
