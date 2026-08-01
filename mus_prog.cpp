@@ -19,8 +19,8 @@ bool app_exec_cmd(const VecS &inColl, SongsArgs &args, VecS &outColl) {
                 outColl = collection_list(inColl); // il comando List non ha argomenti
                 break;
             case SongsCmd::filterLen:
-                outColl = collection_durata(inColl,parse_minute(args.subarg)); // sino a n minuti
-                break;
+                outColl = collection_durata(inColl,validate_minute(args.subarg)); // stringa gia' filtrata convertibile in num  
+                break; 
             case SongsCmd::filterAll: // riversa le canzoni che matchano una stringa in titolo o interprete
                 outColl = collection_cerca(inColl, args.subarg);
                 break;
@@ -31,7 +31,7 @@ bool app_exec_cmd(const VecS &inColl, SongsArgs &args, VecS &outColl) {
                 outColl = collection_cercai(inColl, args.subarg);
                 break;
             case SongsCmd::filterAnP: // riversa solo le canzoni con un certo Anno di Pubblicazione (sub arg)
-                outColl = collection_anno(inColl, parse_year(args.subarg)); 
+                outColl = collection_anno(inColl, std::atoi(args.subarg.c_str())); // string agia' filtrata convertibile in num
                 break;
             case SongsCmd::sortbyAnP: 
                 //

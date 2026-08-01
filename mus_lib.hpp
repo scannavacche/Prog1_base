@@ -74,7 +74,7 @@ enum SongsCmd {
     sortbyAnP,  // ordina la lista per anno di pubb e la riversa integrale 
     sortbyLen,  // ordina la lista per durata crescente e la riversa integrale
     getHelp,    // richiede l'help per gli argomenti a linea di comando
-    invalid     // comando non riconosciuto 
+    invalid     // comando non riconosciuto o parametro non riconosciuto 
 };
 
 //  record di parametri attuali dalla linea di comando
@@ -151,6 +151,8 @@ enum SongsErr {
 bool null_string(std::string s);
 std::string text_normalize(const std::string &inparm) ;
 bool text_match(std::string fullstr, std::string substr);
+int validate_minute(const std::string& text);
+int validate_seconds(const std::string& text);
 std::string zero_fill(int number, int length); 
 
 // file managemnt (close con overloading if/of, read open, rewrite open)
@@ -179,11 +181,10 @@ void debug_runtime_len(song s);
 void showError(SongsErr err, const std::string &detail);
 void showHelp();
 
-// regalino dall' AI
+// regalino dall' AI (regexp varie)
 
-int parse_year(const std::string& text);
-int parse_minute(const std::string& text);
-int parse_seconds(const std::string& text);
+bool parse_int(const std::string& text);
+bool parse_year(const std::string& text);
 
 // deprecated
 

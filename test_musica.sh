@@ -219,14 +219,14 @@ run_both "durata_6" "$OUTDIR/test_durata_6.csv" durata 6
 expect_lines "durata 6: tutti i brani" "$OUTDIR/test_durata_6.csv" 25
 expect_same "durata 6: record identici all'input" "$INPUT" "$OUTDIR/test_durata_6.csv"
 
-expect_failure "durata senza operando" "$INPUT" durata
-expect_accepted   "durata operando vuoto" "$INPUT" durata ""
-expect_accepted   "durata zero" "$INPUT" durata 0
-expect_accepted   "durata negativa" "$INPUT" durata -1
-expect_accepted   "durata non numerica" "$INPUT" durata pippo
-expect_accepted   "durata prefisso numerico con suffisso" "$INPUT" durata 4pippo
-expect_accepted   "durata con troppi argomenti" "$INPUT" durata 4 "$OUTDIR/test_durata_4_extra.csv" extra
-expect_same "durata extra: risultato canonico" "$OUTDIR/test_durata_4.csv" "$OUTDIR/test_durata_4_extra.csv"
+expect_failure  "durata senza operando" "$INPUT" durata
+expect_accepted "durata operando vuoto" "$INPUT" durata ""
+expect_accepted "durata zero" "$INPUT" durata 0
+expect_failure  "durata negativa" "$INPUT" durata -1
+expect_failure  "durata non numerica" "$INPUT" durata pippo
+expect_failure  "durata prefisso numerico con suffisso" "$INPUT" durata 4pippo
+expect_accepted "durata con troppi argomenti" "$INPUT" durata 4 "$OUTDIR/test_durata_4_extra.csv" extra
+expect_same     "durata extra: risultato canonico" "$OUTDIR/test_durata_4.csv" "$OUTDIR/test_durata_4_extra.csv"
 
 # C. cerca <stringa>
 run_both "cerca_queen" "$OUTDIR/test_cerca_queen.csv" cerca queen
@@ -267,11 +267,11 @@ run_both "anno_1985" "$OUTDIR/test_anno_1985.csv" anno 1985
 expect_lines "anno 1985: risultato vuoto" "$OUTDIR/test_anno_1985.csv" 0
 
 expect_failure "anno senza operando" "$INPUT" anno
-observe_case   "anno stringa vuota" "$INPUT" anno ""
-observe_case   "anno non numerico" "$INPUT" anno pippo
-observe_case   "anno sotto range" "$INPUT" anno 1799
-observe_case   "anno sopra range" "$INPUT" anno 3000
-observe_case   "anno con suffisso" "$INPUT" anno 1979pippo
+expect_accepted   "anno stringa vuota" "$INPUT" anno ""
+expect_failure   "anno non numerico" "$INPUT" anno pippo
+expect_accepted   "anno sotto range" "$INPUT" anno 1799
+expect_accepted   "anno sopra range" "$INPUT" anno 3000
+expect_failure   "anno con suffisso" "$INPUT" anno 1979pippo
 expect_accepted "anno con troppi argomenti" "$INPUT" anno 1979 "$OUTDIR/test_anno_extra.csv" extra
 expect_same "anno extra: risultato canonico" "$OUTDIR/test_anno_1979.csv" "$OUTDIR/test_anno_extra.csv"
 

@@ -225,7 +225,7 @@ bool app_parse_args(int argc, char *argv[], SongsArgs& args)
             if ((argc > 2) && songs_parse_cmd(argv[2], probe_cmd)) {  // e' un comando?
                 //
                 // ha due argonmenti ed in seconda pos 
-                // c'e' un comando valido, verifichiamo l' arieta'
+                // c'e' un comando valido, consideriamolo con la sua arieta'
                 //
                 switch (probe_cmd) {
                     //
@@ -278,11 +278,17 @@ bool app_parse_args(int argc, char *argv[], SongsArgs& args)
                         // il terzo argomento dev'esserci 
 
                         args.cmdstr = std::string(argv[2]) + " " + std::string(argv[3]);
+                        // concatenato con il suo arogmento serve solo per tracing
+
                         args.cmdcode = probe_cmd;
 
                         if (null_string(argv[3])) {
-                            args.subarg="0";
+                            args.subarg="0";    // valore stringa nulla accettabile come 0
                         } else {
+                            if (!parse_int(argv[3])) {
+                                probe_cmd = SongsCmd::invalid; // non convertibile in naturale
+                                break;
+                            };
                             args.subarg = argv[3]; 
                         };
                         

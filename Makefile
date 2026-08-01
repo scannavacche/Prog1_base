@@ -2,8 +2,8 @@
 CXX      = g++
 
 # versione release
- CXXFLAGS = -std=c++17 -O2 -Wall 
- LDFLAGS  =
+CXXFLAGS = -std=c++17 -O2 -Wall 
+LDFLAGS  =
 
 # versione debug
 # CXXFLAGS = -std=c++17 -O0 -Wall -g -DDEBUG

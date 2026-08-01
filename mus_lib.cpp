@@ -60,6 +60,26 @@ bool text_match(std::string fullstr, std::string substr) {
     return (text_normalize(fullstr).find(text_normalize(substr)) != std::string::npos);
 }
 
+// controlli di range
+
+int validate_minute(const std::string& text)
+{
+    //
+    // converte una stringa gia' validata in int tra 00 e 99
+    //
+    int minutes = std::atoi(text.c_str());
+    if (minutes < 0 || minutes > 99 ) return 0; else return minutes;   
+}
+
+int validate_seconds(const std::string& text)
+{
+    //
+    // converte una strigna gia' validata in intr tra 00 e 59
+    //
+    int seconds = std::atoi(text.c_str());
+    if (seconds < 0 || seconds > 59 ) return 0; else return seconds;   
+}
+
 std::string zero_fill(int number, int length)
 {
     // pad a sinistra con zeri, ad uso visualizzazione tempi 
@@ -168,22 +188,30 @@ bool songs_parse_cmd(const std::string &pippo, SongsCmd& cmd) {
     return false;
 }
 
-int songs_read_int_field(std::istringstream& record, std::string &raw_val)
+int songs_read_int_field(
+    std::istringstream& record,
+    std::string& raw_val)
 {
     std::string field;
     int value;
 
     // Legge e consuma tutto il campo, compreso il separatore ';'
+
     if (!std::getline(record, field, ';'))
         return 9999;
 
+    raw_val = field;
+
+    static const std::regex integer_pattern(R"(^[0-9]+$)");
+
+    if (!std::regex_match(field, integer_pattern))
+        return 9998;
+
     std::istringstream conv(field);
 
-    // Salta gli spazi iniziali e legge il prefisso numerico (se non sbaglia conversione)
     if (!(conv >> value))
         return 9998;
 
-    raw_val = field;
     return value;
 }
 
@@ -277,40 +305,25 @@ void song_write(std::ostream& outSongs, song currSong) {
                 << currSong.runtime_sec_raw << std::endl;
 }
 
-// aiutino dall' AI
+// aiutino dall' AI con le regexp
 
-int parse_year(const std::string& text)
+bool parse_int(const std::string& text)
+{
+    // Valida una stringa numerica come convertibile ad int
+
+    static const std::regex N_pattern(R"(^[0-9]+$)");
+    return std::regex_match(text, N_pattern);
+}
+
+bool parse_year(const std::string& text)
 {
     //
-    // valida un anno 1800-2999 e lo restituisce come int
+    // valida un anno come intero e limitato 1800-2999 
     // 
     static const std::regex year_pattern(
         R"(^(?:1[89][0-9]{2}|2[0-9]{3})$)"
     );
-    if (!std::regex_match(text, year_pattern)) return 0;
-    return std::atoi(text.c_str());
-}
-
-int parse_minute(const std::string& text)
-{
-    //
-    // valida una stringa tra 00 e 99 e la rende come valore intero per minuti
-    //
-    static const std::regex minutes_pattern(R"(^[0-9]+$)");
-    if (!std::regex_match(text, minutes_pattern)) return 0;
-    int minutes = std::atoi(text.c_str());
-    if (minutes < 0 || minutes > 99 ) return 0; else return minutes;   
-}
-
-int parse_seconds(const std::string& text)
-{
-    //
-    // valida una stringa tra 00 e 59 e la rende come valore intero per secondi
-    //
-    static const std::regex seconds_pattern(R"(^[0-9]+$)");
-    if (!std::regex_match(text, seconds_pattern)) return 0;
-    int seconds = std::atoi(text.c_str());
-    if (seconds < 0 || seconds > 59 ) return 0; else return seconds;   
+    return std::regex_match(text, year_pattern);
 }
 
 
