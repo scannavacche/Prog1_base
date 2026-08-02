@@ -187,7 +187,8 @@ bool parse_int(const std::string& text);
 bool parse_year(const std::string& text);
 
 // deprecated
+// split di argv[2] con la vecchia sintassi  cmd:val
 
-void songs_split_cmd(std::string inparm, std::string &outcmd, std::string &outval); // split di argv[2] se cmd:val
+void songs_split_cmd(std::string inparm, std::string &outcmd, std::string &outval); 
 
 #endif
